@@ -5,7 +5,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 const WebpackChunkHash = require('webpack-chunk-hash');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const autoprefixer = require('autoprefixer');
+// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 
 const extractPlugin = new ExtractTextPlugin({ filename: './assets/css/[name].[chunkhash].css' });
@@ -13,21 +14,18 @@ const extractPlugin = new ExtractTextPlugin({ filename: './assets/css/[name].[ch
 const entry = {
     app: './assets/js/app.js',
     login: './assets/js/login.js',
-    vendors: ['jquery']
+    vendors: ['font-awesome/scss/font-awesome.scss', 'jquery']
 }
 
 const plugins = [
 
     extractPlugin,
-    new BundleAnalyzerPlugin(),
+    // new BundleAnalyzerPlugin(),
     new CleanWebpackPlugin(['dist']),
     new webpack.ProvidePlugin({
         $: "jquery",
         jQuery: "jquery"
     }),
-    /* new UglifyJSPlugin({
-        sourceMap: true
-    }), */
     /* Enable this in production only */
     /* new webpack.DefinePlugin({
        'process.env.NODE_ENV': JSON.stringify('production')
@@ -75,40 +73,25 @@ const config = {
                     }
                 }
             },
+            
             //html-loader
             { test: /\.html$/, use: ['html-loader'] },
-            //sass-loader
+
+            // sass(scss), css loader
             {
-                test: /\.scss$/,
-                include: [path.resolve(__dirname, 'src', 'assets', 'scss')],
-                use: extractPlugin.extract({
-                    use: [
-                        {
-                            loader: 'css-loader',
-                            options: {
-                                sourceMap: true
-                            }
-                        },
-                        {
-                            loader: 'postcss-loader',
-                            options: {
-                                sourceMap: true,
-                                plugins: () => [require('autoprefixer')]
-                            }
-                        },
-                        {
-                            loader: 'sass-loader',
-                            options: {
-                                sourceMap: true
-                            }
-                        }
-                    ],
-                    fallback: 'style-loader'
-                })
+                test: /\.(css|sass|scss)$/,
+                use: ExtractTextPlugin.extract({ fallback: 'style-loader', use: 'css-loader!sass-loader' })
             },
+
+            // font loader
+            {
+                test: /\.(woff|woff2|eot|ttf|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+                loader: 'url-loader'
+            },
+
             //file-loader(for images)
             {
-                test: /\.(jpeg|jpg|png|gif|svg)$/,
+                test: /\.(jpeg|jpg|png|gif)$/,
                 use: [{
                     loader: 'file-loader',
                     options:
@@ -118,20 +101,20 @@ const config = {
                         }
                 }]
             },
-            //file-loader(for fonts)
-            {
-                test: /\.(woff|woff2|eot|ttf|otf)$/,
-                use: [{
-                    loader: 'file-loader',
-                    options: {
-                        name: '[path][name].[ext]',
-                    }
-                }]
-            },
+
             // for plugins like Jquery, bootstrap, font-awesome etc
             { test: /[\/\\]node_modules[\/\\]some-module[\/\\]index\.js$/, loader: "imports?this=>window" },
             { test: /[\/\\]node_modules[\/\\]some-module[\/\\]index\.js$/, loader: "imports?define=>false" },
-            { test: /bootstrap\/dist\/js\/umd\//, loader: 'imports?jQuery=jquery' }
+            { test: /bootstrap\/dist\/js\/umd\//, loader: 'imports?jQuery=jquery' },
+
+            // font-awesome
+            {
+                test: /font-awesome\.config\.js/,
+                use: [
+                    { loader: 'style-loader' },
+                    { loader: 'font-awesome-loader' }
+                ]
+            },
         ]
     },
 
@@ -150,7 +133,6 @@ const config = {
             }
         },
         minimizer: [
-            // we specify a custom UglifyJsPlugin here to get source maps in production
             new UglifyJSPlugin({
                 cache: true,
                 parallel: true,
